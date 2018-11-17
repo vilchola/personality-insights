@@ -46,5 +46,6 @@ class Watson
   	  	'format' => 'json',
   	  	'limit' => 6
   	  	})
+  	return @response
   end
 end

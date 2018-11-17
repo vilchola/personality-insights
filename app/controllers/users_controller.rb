@@ -1,6 +1,8 @@
 require 'watson'
+require 'json'
 
 class UsersController < ApplicationController
+  include ActionView::Helpers::NumberHelper
   before_action :set_user, only: [:show, :update, :destroy]
 
   # GET /users
@@ -12,31 +14,58 @@ class UsersController < ApplicationController
   # POST /users
   def create
   	@user = User.create!(user_params)
+
+    tweets = get_tweets(@user.username)
+
+    ibm = Watson.new()
+    response = ibm.get_personality(tweets)
+    traits = ""
+    response["personality"].each do |trait|
+      #content = {
+      #  'name' => trait["name"],
+      #  'percentile' => ActiveSupport::NumberHelper.number_to_percentage((trait["percentile"] * 100), precision: 2)
+      #}
+      #traits << content if (trait["percentile"] * 100) >= 50
+      traits << trait["name"] + ", " if (trait["percentile"] * 100) >= 50
+    end
+    #traits = traits.sort_by{ |p| p['percentile'].to_i }.reverse
+
+    #tag = 'pop'
+    #lastfm = ibm.get_lastfm(tag)
+    #render json: lastfm
+
+    @user.update(trait: traits[0...-2])
   	json_response(@user, :created)
   end
 
   # GET /users/:id
   def show
-    #json_response(@user)
-
-    tweets = get_tweets(@user.username)
-    #render json: tweets
-
-    ibm = Watson.new()
-    #token = ibm.get_token
-    #render json: token
-    
-    personality = ibm.get_personality(tweets)
-    render json: personality
-
-    #tag = 'pop'
-    #lastfm = ibm.get_lastfm(tag)
-    #render json: lastfm
+    json_response(@user)
   end
 
   # PUT /users/:id
   def update
-  	@user.update(user_params)
+  	#@user.update(user_params)
+    tweets = get_tweets(@user.username)
+
+    ibm = Watson.new()
+    response = ibm.get_personality(tweets)
+    traits = ""
+    response["personality"].each do |trait|
+      #content = {
+      #  'name' => trait["name"],
+      #  'percentile' => ActiveSupport::NumberHelper.number_to_percentage((trait["percentile"] * 100), precision: 2)
+      #}
+      #traits << content if (trait["percentile"] * 100) >= 50
+      traits << trait["name"] + ", " if (trait["percentile"] * 100) >= 50
+    end
+    #traits = traits.sort_by{ |p| p['percentile'].to_i }.reverse
+
+    #tag = 'pop'
+    #lastfm = ibm.get_lastfm(tag)
+    #render json: lastfm
+
+    @user.update(trait: traits[0...-2])
   	head :no_content
   end
 
